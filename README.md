@@ -70,7 +70,7 @@ Pro hardware & kits available for advanced users.
 
 ## Contact
 Email: liyiteng+github@gmail.com  
-WeChat: liyiteng
+WeChat: liyiteng  
 Videos & tutorials soon on: Bilibili / YouTube / TikTok
 
 ## Team
