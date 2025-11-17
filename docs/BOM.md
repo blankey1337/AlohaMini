@@ -17,8 +17,8 @@ On AlohaMini, the Host side consists of a PC workstation and leader arms. VR con
 
 | Item | Model / Notes | Qty | Unit Cost (US) | Buy (US) | Unit Cost (CN) | Buy (CN) |
 |------|---------------|-----|----------------|----------|----------------|----------|
-| Servo motor | Feetech STS3215 (12 V bus) | 4 | — | Amazon() | ¥110 | [taobao](https://e.tb.cn/h.64H9u3maGWzIp5Q?tk=T5liexkG6Yz) |
-| Omni wheel | 4″ (≈100 mm) | 3 | — | Amazon | ¥135 | [pinduoduo](https://mobile.yangkeduo.com/goods.html?ps=kKWPC7xuzw) |
+| Servo motor | Feetech STS3215 (12 V bus) | 4 | $13.89 | [Alibaba](https://www.alibaba.com/product-detail/6PCS-7-4V-STS3215-Servos-for_1600523509006.html) | ¥110 | [taobao](https://e.tb.cn/h.64H9u3maGWzIp5Q?tk=T5liexkG6Yz) |
+| Omni wheel | 4″ (≈100 mm) | 3 | $47 | [Amazon](https://www.amazon.com/Replacement-Plastic-Directional-Accessories-Platform/dp/B0F9W6QX5M/ref=sr_1_1?crid=RUB7HLFVFAW4&dib=eyJ2IjoiMSJ9.OEVluSHnKdSoUssYPqqvc9zDttA_kPqToxcIUPC9mVE.lDKJEFZ-n8SldCgHwC__Ikus8FGKxQcuN14cjtG5WHQ&dib_tag=se&keywords=Omni-Directional+Wheels+4&qid=1762964120&sprefix=omni-directional+wheels+4%2Caps%2C938&sr=8-1) | ¥135 | [pinduoduo](https://mobile.yangkeduo.com/goods.html?ps=kKWPC7xuzw) |
 | USB camera | 720p focal length 2.4 mm | 3 | — | Amazon | ¥125 | [taobao](https://item.taobao.com/item.htm?id=666278411821) |
 | (optional) Bearing | 12×18×4 mm (ID × OD × W) — wheel axle bearing | 3 | — | Amazon | ¥6 | [tmall](https://detail.tmall.com/item.htm?id=824704356695) |
 | Bearing | 4×13×5 mm (ID × OD × W) — lift axis bearing | 8 | — | Amazon | ¥3 | [taobao](https://item.taobao.com/item.htm?id=565418362178) |
@@ -32,9 +32,9 @@ On AlohaMini, the Host side consists of a PC workstation and leader arms. VR con
 | M4x6x5 heat-set insert | For OB_Chassis_Bearing_Cover.stl | 12 | — | Amazon | ¥4 | [taobao](https://item.taobao.com/item.htm?id=809241671998) |
 | Adhesive | Double-sided tape / epoxy — cable retention & structural bonding | 1 | — | Amazon | ¥12 | [jd](https://item.jd.com/100141557259.html) |
 | Servo extension cable | SCS 3-pin, 90 cm | 2 | — | Amazon | ¥3 | [taobao](https://item.taobao.com/item.htm?id=616460581906) |
-| Battery | 12V Li-ion pack with 5521 barrel jack (male & female) | 1 | — | Amazon | ¥130 | [taobao](https://item.taobao.com/item.htm?id=890828103056) |
-| USB Type-C cable | Only for testing the mobile base | 1 | — | Amazon | ¥20 | [tmall](https://detail.tmall.com/item.htm?id=754024805047) |
-| Waveshare Bus Servo Controller | Only for testing the mobile base | 1 | — | Amazon | ¥27 | [tmall](https://detail.tmall.com/item.htm?id=738817173460) |
+| Battery | 12V Li-ion pack with 5521 barrel jack (male & female) | 1 | $43 | [Amazon](https://www.amazon.com/KBT-Rechargeable-Connector-Replacement-Security/dp/B0C242DYT1/ref=sr_1_2_sspa?th=1) | ¥130 | [taobao](https://item.taobao.com/item.htm?id=890828103056) |
+| USB Type-C cable | Only for testing the mobile base | 1 | $10 | [Amazon](https://www.amazon.com/Charging-etguuds-Charger-Braided-Compatible/dp/B0B8NWLLW2/?th=1) | ¥20 | [tmall](https://detail.tmall.com/item.htm?id=754024805047) |
+| Waveshare Bus Servo Controller | Only for testing the mobile base | 1 | $13 | [Amazon](https://www.amazon.com/Waveshare-Integrates-Control-Circuit-Supports/dp/B0CTMM4LWK/) | ¥27 | [tmall](https://detail.tmall.com/item.htm?id=738817173460) |
 | 3D-printed parts | PLA/PETG/ABS (files in /hardware/mobile_base/stl) | ~4 kg filament | — | — | — | — |
 
 **3D Printing Parts List:**
@@ -66,21 +66,21 @@ If you prefer the base to operate as an **independent host system** (Wi‑Fi, un
 
 | Item | Model / Notes | Qty | Unit Cost (US) | Buy (US) | Unit Cost (CN) | Buy (CN) |
 |------|---------------|-----|----------------|----------|----------------|----------|
-| Compute board | Raspberry Pi 5 (4GB/8GB) | 1 | — | Amazon | ¥600 | [taobao](https://item.taobao.com/item.htm?id=688878446695) |
-| DC converter | 12V → 5V / 5A buck converter | 1 | — | Amazon | ¥64 | [taobao](https://item.taobao.com/item.htm?id=800698078303) |
+| Compute board | Raspberry Pi 5 (4GB/8GB) | 1 | — | [Adafruit](https://www.adafruit.com/product/5812) | ¥600 | [taobao](https://item.taobao.com/item.htm?id=688878446695) |
+| DC converter | 12V → 5V / 5A buck converter | 1 | $13 | [Amazon](https://www.amazon.com/Klnuoxj-Converter-Interface-Waterproof-Compatible/dp/B0CRVW7N2J?source=ps-sl-shoppingads-lpcontext&ref_=fplfs&smid=A1QRG6NHEUKUZO&gQT=0&th=1) | ¥64 | [taobao](https://item.taobao.com/item.htm?id=800698078303) |
 | Monitor | 7-inch HD IPS HDMI interface + touch + Type C power supply | 1 | — | Amazon | ¥291 | [taobao](https://item.taobao.com/item.htm?id=592070943040) |
 
 
 ## Follower Arms
 | Item | Model / Notes | Qty | Unit Cost (US) | Buy (US) | Unit Cost (CN) | Buy (CN) |
 |------|---------------|-----|----------------|----------|----------------|----------|
-| Servo motor | Feetech STS3215 (12V bus) | 12 | — | Amazon | ¥110 | [taobao](https://e.tb.cn/h.64H9u3maGWzIp5Q?tk=T5liexkG6Yz) |
-| Waveshare Bus Servo Controller | For connecting to the Raspberry Pi 5 | 2 | — | Amazon | ¥27 | [tmall](https://detail.tmall.com/item.htm?id=738817173460) |
+| Servo motor | Feetech STS3215 (12V bus) | 12 | $13.89 | [Alibaba](https://www.alibaba.com/product-detail/Feetech-STS3215-SO-ARM100-Servo-12V_1601292634404.html?spm=a2700.details.you_may_like.3.5ab1478e45kY42) | ¥110 | [taobao](https://e.tb.cn/h.64H9u3maGWzIp5Q?tk=T5liexkG6Yz) |
+| Waveshare Bus Servo Controller | For connecting to the Raspberry Pi 5 | 2 | $13 | [Amazon](amazon.com/Waveshare-Integrates-Control-Circuit-Supports/dp/B0CTMM4LWK/) | ¥27 | [tmall](https://detail.tmall.com/item.htm?id=738817173460) |
 | USB camera | 720p focal length 3.8 mm | 2 | — | Amazon | ¥103 | [taobao](https://item.taobao.com/item.htm?id=590682120464) |
-| Battery | 12V Li-ion pack | 1 | — | Amazon | ¥130 | [taobao](https://item.taobao.com/item.htm?id=890828103056) |
+| Battery | 12V Li-ion pack | 1 | — | [Amazon](https://www.amazon.com/KBT-Rechargeable-Connector-Replacement-Security/dp/B0C242DYT1/ref=sr_1_2_sspa?th=1) | ¥130 | [taobao](https://item.taobao.com/item.htm?id=890828103056) |
 | 1-to-2 DC splitter cable | 30 cm, 5521 connector — for powering the arms | 1 | — | Amazon | ¥5 | [taobao](https://item.taobao.com/item.htm?id=594921965049) |
 | DC extension cable | 1.5 m, 5521 connector — for powering the arms | 2 | — | Amazon | ¥2.50 | [taobao](https://item.taobao.com/item.htm?id=43628177900) |
-| USB Type-C cable | For connecting to the Raspberry Pi 5 | 2 | — | Amazon | ¥20 | [tmall](https://detail.tmall.com/item.htm?id=754024805047) |
+| USB Type-C cable | For connecting to the Raspberry Pi 5 | 2 | $10 | [Amazon](https://www.amazon.com/Charging-etguuds-Charger-Braided-Compatible/dp/B0B8NWLLW2/?th=1) | ¥20 | [tmall](https://detail.tmall.com/item.htm?id=754024805047) |
 | 3D-printed parts | PLA/PETG/ABS (files in /hardware/arms/stl) | 1 set | — | — | — | — |
 
 
@@ -97,11 +97,11 @@ For detailed printing instructions, refer to the [SO-ARM100 project README](http
 
 | Item | Model / Notes | Qty | Unit Cost (US) | Buy (US) | Unit Cost (CN) | Buy (CN) |
 |------|---------------|-----|----------------|----------|----------------|----------|
-| Servo motor | Feetech STS3215 (7.4V bus, 147:1 gear ratio) | 12 | — | Amazon | ¥99 | [taobao](https://item.taobao.com/item.htm?id=616159163206) |
-| Waveshare Bus Servo Controller | For connecting to the PC | 2 | — | Amazon | ¥27 | [tmall](https://detail.tmall.com/item.htm?id=738817173460) |
+| Servo motor | Feetech STS3215 (7.4V bus, 147:1 gear ratio) | 12 | $13.89 | [Alibaba](https://www.alibaba.com/product-detail/Standard-Open-SO-100-SO-101_1601503860487.html?spm=a2700.galleryofferlist.normal_offer.d_title.2e5b13a0rBVIyZ&priceId=bd3aba77b87e44fda0fb65d57cbc41bf) | ¥99 | [taobao](https://item.taobao.com/item.htm?id=616159163206) |
+| Waveshare Bus Servo Controller | For connecting to the PC | 2 | $13 | [Amazon](https://www.amazon.com/Waveshare-Integrates-Control-Circuit-Supports/dp/B0CTMM4LWK/) | ¥27 | [tmall](https://detail.tmall.com/item.htm?id=738817173460) |
 | Battery | 5V Li-ion pack | 1 | — | Amazon | ¥30 | [taobao](https://item.taobao.com/item.htm?id=765749120668) |
 | 1-to-2 DC splitter cable | 70 cm — for powering the arms | 1 | — | Amazon | ¥5 | [taobao](https://item.taobao.com/item.htm?id=594921965049) |
-| USB Type-C cable | For connecting to the PC | 2 | — | Amazon | ¥20 | [tmall](https://detail.tmall.com/item.htm?id=754024805047) |
+| USB Type-C cable | For connecting to the PC | 2 | $10 | [Amazon](https://www.amazon.com/Charging-etguuds-Charger-Braided-Compatible/dp/B0B8NWLLW2/?th=1) | ¥20 | [tmall](https://detail.tmall.com/item.htm?id=754024805047) |
 | 3D-printed parts | PLA/PETG/ABS (files in /hardware/arms/stl) | 1 set | — | — | — | — |
 
 **3D Printing Parts List:**
