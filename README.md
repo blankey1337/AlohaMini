@@ -38,7 +38,7 @@ Built for embodied AI research and real-world manipulation. Assemble at home in 
 Note: 
 - Printable STL files under `/hardware/`
 - Compute platform can be replaced with Jetson Nano or similar SBCs if desired.
-- Additionally, CAD files will be released soon.
+- Additionally, CAD and URDF files will be released soon.
 ## Quick Start
 
 Start building and running AlohaMini:
