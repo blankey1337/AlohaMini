@@ -6,6 +6,13 @@ AlohaMini is a dual-arm mobile robot with a motorized vertical lift — beautifu
 
 Built for embodied AI research and real-world manipulation. Assemble at home in ~60 minutes, customize every part, and train or deploy with LeRobot.
 
+
+## Updates
+
+- [2025-11-27] STEP (CAD) files are now available (`/hardware/step/`)
+- URDF files coming soon
+
+
 ### What Makes It Different
 
 - **Motorized vertical lift** — 0–60 cm travel (floor-to-table reach)
@@ -40,7 +47,8 @@ Built for embodied AI research and real-world manipulation. Assemble at home in 
 Note: 
 - Printable STL files under `/hardware/`
 - Compute platform can be replaced with Jetson Nano or similar SBCs if desired.
-- Additionally, CAD and URDF files will be released soon.
+- URDF files will be released soon
+
 ## Quick Start
 
 Start building and running AlohaMini:
