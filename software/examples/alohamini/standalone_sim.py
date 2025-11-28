@@ -5,6 +5,7 @@ import argparse
 import numpy as np
 import zmq
 import cv2
+import math
 from dataclasses import dataclass, field
 
 # --- Mocks for LeRobot dependencies ---
@@ -42,6 +43,18 @@ class LiftAxisConfig:
 class DeviceNotConnectedError(Exception):
     pass
 
+# --- Simulation Classes ---
+
+@dataclass
+class SimObject:
+    label: str
+    x: float  # meters
+    y: float  # meters
+    width: float = 0.2 # meters
+    height: float = 0.2 # meters
+    color: tuple = (0, 0, 255) # BGR
+    shape: str = "rectangle" # or circle
+
 # --- LeKiwiSim Implementation (Adapted) ---
 
 class LeKiwiSim:
@@ -53,9 +66,17 @@ class LeKiwiSim:
         self.state = {
             "x": 0.0,
             "y": 0.0,
-            "theta": 0.0,
+            "theta": 0.0, # degrees
         }
         
+        # World Objects
+        self.objects = [
+            SimObject("soda_can", 1.0, 0.5, 0.1, 0.1, (255, 0, 0), "circle"), # Blue Soda
+            SimObject("trash", 1.5, -0.5, 0.2, 0.2, (0, 0, 255), "rectangle"), # Red Trash
+            SimObject("charger", 2.0, 0.0, 0.3, 0.3, (0, 255, 0), "rectangle"), # Green Charger
+            SimObject("table", 0.0, 1.5, 0.8, 0.4, (42, 42, 165), "rectangle"), # Brownish Table
+        ]
+
         # Joint positions
         self.joints = {}
         joint_names = [
@@ -91,6 +112,139 @@ class LeKiwiSim:
         print("LeKiwiSim disconnected.")
         self._is_connected = False
         
+    def _world_to_robot(self, wx, wy):
+        """Convert world coordinates to robot-centric coordinates (robot is at 0,0 facing +X)"""
+        dx = wx - self.state["x"]
+        dy = wy - self.state["y"]
+        
+        # Rotate by -theta
+        rad = np.radians(self.state["theta"])
+        c, s = np.cos(rad), np.sin(rad)
+        
+        # Standard rotation matrix for rotating points CCW is:
+        # x' = x cos - y sin
+        # y' = x sin + y cos
+        # Here we rotate the *points* by -theta (or coordinate system by +theta)
+        # So we use -theta.
+        # x' = dx * cos(-t) - dy * sin(-t) = dx * c + dy * s
+        # y' = dx * sin(-t) + dy * cos(-t) = -dx * s + dy * c
+        
+        rx = dx * c + dy * s
+        ry = -dx * s + dy * c
+        
+        return rx, ry
+
+    def render_camera(self, cam_name, width, height):
+        # Create a background (Gray floor)
+        img = np.full((height, width, 3), 200, dtype=np.uint8)
+        
+        # Grid lines (every 1 meter)
+        # We need to map world coords to pixel coords.
+        # Let's say: Center of image is Robot (0,0 local).
+        # Scale: 100 pixels = 1 meter.
+        scale = 100.0
+        cx = width // 2
+        cy = height // 2
+        
+        # Draw grid
+        # We iterate a range around the robot's world position
+        rx, ry = self.state["x"], self.state["y"]
+        min_gx = int(rx - width/scale/2) - 1
+        max_gx = int(rx + width/scale/2) + 1
+        min_gy = int(ry - height/scale/2) - 1
+        max_gy = int(ry + height/scale/2) + 1
+        
+        for gx in range(min_gx, max_gx + 1):
+             # Transform world grid line x=gx to robot space, then to pixels
+             p1 = self._world_to_robot(gx, ry - 10) # Line stretches far
+             p2 = self._world_to_robot(gx, ry + 10)
+             
+             # Project to pixels: x_pix = cx + x_rob * scale, y_pix = cy - y_rob * scale (since image y is down)
+             # Note: In robot frame, +X is forward? No, usually +X is forward in ROS, but here I used +X is East, Theta is CCW from East.
+             # Let's assume Robot "Forward" is aligned with its Theta.
+             # So in "_world_to_robot", rx is distance "Forward" (along heading), ry is distance "Left" (cross product).
+             # Let's check math in _world_to_robot:
+             # If theta=0, rx=dx, ry=dy. Robot facing East. Obj at (1,0) -> rx=1 (Forward), ry=0.
+             # If theta=90, rx=dy, ry=-dx. Robot facing North. Obj at (0,1) -> rx=1 (Forward), ry=0.
+             # Yes, rx is "Forward", ry is "Left".
+             
+             # So: Screen UP should be Robot Forward (rx). Screen RIGHT should be Robot Right (-ry).
+             # Screen X = cx - ry * scale
+             # Screen Y = cy - rx * scale
+             
+             pt1_screen = (int(cx - p1[1] * scale), int(cy - p1[0] * scale))
+             pt2_screen = (int(cx - p2[1] * scale), int(cy - p2[0] * scale))
+             cv2.line(img, pt1_screen, pt2_screen, (180, 180, 180), 1)
+
+        for gy in range(min_gy, max_gy + 1):
+             p1 = self._world_to_robot(rx - 10, gy)
+             p2 = self._world_to_robot(rx + 10, gy)
+             pt1_screen = (int(cx - p1[1] * scale), int(cy - p1[0] * scale))
+             pt2_screen = (int(cx - p2[1] * scale), int(cy - p2[0] * scale))
+             cv2.line(img, pt1_screen, pt2_screen, (180, 180, 180), 1)
+
+        # Draw Robot (Triangle)
+        # Robot is at 0,0 in robot frame.
+        robot_pts = np.array([
+            [0, -10], # Back Center (slightly back) -> wait.
+            # Forward is +rx -> Up on screen (-y).
+            # Right is -ry -> Right on screen (+x).
+            # Triangle pointing up:
+            [cx, cy - 20], # Tip (Forward)
+            [cx - 15, cy + 15], # Back Left
+            [cx + 15, cy + 15]  # Back Right
+        ], np.int32)
+        cv2.fillPoly(img, [robot_pts], (50, 50, 50))
+        
+        detections = []
+
+        # Draw Objects
+        for obj in self.objects:
+            # Transform to robot frame
+            rx, ry = self._world_to_robot(obj.x, obj.y)
+            
+            # Project to screen
+            sx = int(cx - ry * scale)
+            sy = int(cy - rx * scale)
+            
+            # Check if roughly in view
+            if 0 <= sx < width and 0 <= sy < height:
+                # Size in pixels
+                w_pix = int(obj.width * scale)
+                h_pix = int(obj.height * scale)
+                
+                # Bounding box for object
+                top_left = (sx - w_pix // 2, sy - h_pix // 2)
+                bottom_right = (sx + w_pix // 2, sy + h_pix // 2)
+                
+                # Draw
+                if obj.shape == "circle":
+                    cv2.circle(img, (sx, sy), w_pix // 2, obj.color, -1)
+                else:
+                    cv2.rectangle(img, top_left, bottom_right, obj.color, -1)
+                
+                # Add label
+                cv2.putText(img, obj.label, (sx - w_pix//2, sy - h_pix//2 - 5), 
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,0), 1)
+                
+                # Create Detection (Perfect Detector)
+                # Bounding box in pixel coordinates [x, y, w, h] or [x1, y1, x2, y2]
+                # Let's use [x1, y1, x2, y2]
+                # Clip to screen
+                x1 = max(0, top_left[0])
+                y1 = max(0, top_left[1])
+                x2 = min(width, bottom_right[0])
+                y2 = min(height, bottom_right[1])
+                
+                if x2 > x1 and y2 > y1:
+                    detections.append({
+                        "label": obj.label,
+                        "confidence": 1.0,
+                        "box": [x1, y1, x2, y2] # Pixel coords
+                    })
+
+        return img, detections
+
     def get_observation(self) -> dict:
         if not self.is_connected:
             raise DeviceNotConnectedError("Not connected")
@@ -112,14 +266,13 @@ class LeKiwiSim:
         
         obs["lift_axis.height_mm"] = self.joints["lift_axis"]
         
-        # Simulated Cameras (Noise or patterns)
+        # Simulated Perception
+        obs["detections"] = {}
+        
         for cam, cfg in self.config.cameras.items():
-            h, w = cfg.height, cfg.width
-            # Create a noisy image
-            img = np.random.randint(0, 255, (h, w, 3), dtype=np.uint8)
-            # Draw some text
-            cv2.putText(img, f"{cam}", (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+            img, dets = self.render_camera(cam, cfg.width, cfg.height)
             obs[cam] = img
+            obs["detections"][cam] = dets
 
         return obs
 
@@ -205,6 +358,13 @@ def main():
             
             # 3. Encode Images
             encoded_obs = obs.copy()
+            
+            # Remove raw image data from encoded_obs to save bandwidth/processing if not needed, 
+            # but we need to encode it first.
+            
+            # Special handling for detections: keep them as object
+            # (they are already json serializable)
+            
             for cam in config.cameras:
                 if cam in obs:
                     ret, buffer = cv2.imencode(".jpg", obs[cam], [int(cv2.IMWRITE_JPEG_QUALITY), 90])
@@ -228,6 +388,6 @@ def main():
         socket_pub.close()
         socket_sub.close()
         context.term()
-
+        
 if __name__ == "__main__":
     main()
