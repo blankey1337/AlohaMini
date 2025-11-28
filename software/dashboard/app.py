@@ -119,8 +119,13 @@ def send_command():
             cmd_socket.send_string(json.dumps({"reset": True}))
             
     elif cmd == 'start_recording':
-        # Trigger recording logic (would need to signal record_bi.py or similar)
-        pass
+        # Trigger recording logic
+        if cmd_socket:
+            cmd_socket.send_string(json.dumps({"start_recording": True}))
+            
+    elif cmd == 'stop_recording':
+        if cmd_socket:
+            cmd_socket.send_string(json.dumps({"stop_recording": True}))
         
     return jsonify({'status': 'ok'})
 
