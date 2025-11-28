@@ -96,8 +96,13 @@ def video_feed(camera_name):
 @app.route('/api/status')
 def get_status():
     with lock:
-        # Filter out large image data for status endpoint
-        status = {k: v for k, v in latest_observation.items() if not (isinstance(v, str) and len(v) > 1000)}
+        # Filter out large image data for status endpoint, but keep the key
+        status = {}
+        for k, v in latest_observation.items():
+            if isinstance(v, str) and len(v) > 1000:
+                status[k] = "__IMAGE_DATA__"
+            else:
+                status[k] = v
         status['connected'] = connected
     return jsonify(status)
 

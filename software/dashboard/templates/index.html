@@ -46,17 +46,22 @@
                     
                     // Update Status Table
                     for (const [key, value] of Object.entries(data)) {
-                        // Skip camera data (if any leaks into status) and long strings
-                        if (typeof value === 'string' && value.length > 100) continue;
                         
-                        // Check if this key might be a camera
-                        // If it's a camera key and not in activeCameras, add it
-                        if (knownCameras.includes(key) || key.includes('cam') || key.includes('wrist')) {
+                        // Check if this key is a camera placeholder
+                        if (value === "__IMAGE_DATA__") {
                            if (!activeCameras.has(key) && !document.getElementById('cam-' + key)) {
                                addCamera(key);
                                activeCameras.add(key);
                            }
                            continue; // Don't show camera keys in text table
+                        }
+                        
+                        // Skip if it looks like a camera key but we didn't get image data marker
+                        // (This avoids treating wrist_roll.pos as a camera)
+                        if (knownCameras.includes(key)) {
+                             // It's a known camera but value isn't image data? 
+                             // Maybe it's empty string or something.
+                             // Let's just continue to show it as text if it's not __IMAGE_DATA__
                         }
 
                         let displayValue = value;
