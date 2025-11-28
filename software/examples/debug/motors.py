@@ -11,7 +11,7 @@ from lerobot.motors.feetech import (
     OperatingMode,
 )
 
-DEFAULT_PORT = "/dev/ttyACM0"
+DEFAULT_PORT = os.getenv("FEETECH_PORT", "/dev/ttyACM0")
 HALF_TURN_DEGREE = 180
 
 GENERAL_ACTIONS = {"sleep", "print"}

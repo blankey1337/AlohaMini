@@ -18,6 +18,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--use_dummy", action="store_true", help="Do not connect robot, only print actions")
 parser.add_argument("--fps", type=int, default=30, help="Main loop frequency (frames per second)")
 parser.add_argument("--remote_ip", type=str, default="127.0.0.1", help="Alohamini host IP address")
+parser.add_argument("--left_arm_port", type=str, default="/dev/am_arm_leader_left", help="Left leader arm port")
+parser.add_argument("--right_arm_port", type=str, default="/dev/am_arm_leader_right", help="Right leader arm port")
 args = parser.parse_args()
 
 USE_DUMMY = args.use_dummy
@@ -29,8 +31,8 @@ if USE_DUMMY:
 # Create configs
 robot_config = LeKiwiClientConfig(remote_ip=args.remote_ip, id="my_alohamini")
 bi_cfg = BiSO100LeaderConfig(
-    left_arm_port="/dev/am_arm_leader_left",
-    right_arm_port="/dev/am_arm_leader_right",
+    left_arm_port=args.left_arm_port,
+    right_arm_port=args.right_arm_port,
     id="so101_leader_bi3",
 )
 
