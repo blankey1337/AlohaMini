@@ -1,7 +1,10 @@
 import base64
 import json
 import os
+import random
 import sys
+import time
+from datetime import datetime
 
 import cv2
 import numpy as np
@@ -39,6 +42,54 @@ sys.path.append(repo_root)
 
 # Locate URDF
 URDF_PATH = os.path.join(repo_root, "software/src/lerobot/robots/alohamini/alohamini.urdf")
+
+class DatasetRecorder:
+    def __init__(self, root_dir="data"):
+        self.root_dir = root_dir
+        self.is_recording = False
+        self.current_episode_dir = None
+        self.frame_idx = 0
+        self.episode_idx = 0
+        
+        if not os.path.exists(root_dir):
+            os.makedirs(root_dir)
+            
+    def start_recording(self):
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        self.current_episode_dir = os.path.join(self.root_dir, f"episode_{timestamp}")
+        os.makedirs(self.current_episode_dir)
+        os.makedirs(os.path.join(self.current_episode_dir, "images"))
+        self.frame_idx = 0
+        self.is_recording = True
+        print(f"Started recording to {self.current_episode_dir}")
+        
+    def stop_recording(self):
+        if self.is_recording:
+            print(f"Stopped recording. Saved {self.frame_idx} frames.")
+            self.is_recording = False
+            self.current_episode_dir = None
+            
+    def save_frame(self, obs, action):
+        if not self.is_recording:
+            return
+            
+        # Save JSON data (state + action)
+        data = {
+            "timestamp": time.time(),
+            "observation": {k: v for k, v in obs.items() if not isinstance(v, np.ndarray)},
+            "action": action
+        }
+        
+        with open(os.path.join(self.current_episode_dir, f"frame_{self.frame_idx:06d}.json"), "w") as f:
+            json.dump(data, f)
+            
+        # Save Images
+        for k, v in obs.items():
+            if isinstance(v, np.ndarray): # Image
+                img_path = os.path.join(self.current_episode_dir, "images", f"{k}_{self.frame_idx:06d}.jpg")
+                cv2.imwrite(img_path, v)
+                
+        self.frame_idx += 1
 
 class IsaacAlohaMini:
     def __init__(self, world, urdf_path):
@@ -188,6 +239,8 @@ def main():
     
     print(f"Isaac Sim AlohaMini running. Ports: OBS={PORT_OBS}, CMD={PORT_CMD}")
     
+    recorder = DatasetRecorder(root_dir="data_sim")
+    
     while simulation_app.is_running():
         world.step(render=True)
         
@@ -203,7 +256,23 @@ def main():
             joint_cmds = {}
             vx, vy, vth = 0, 0, 0
             
+            # Check for system commands
+            if "start_recording" in cmd:
+                recorder.start_recording()
+                continue
+            if "stop_recording" in cmd:
+                recorder.stop_recording()
+                continue
+            
             for k, v in cmd.items():
+                if k == "reset" and v is True:
+                     # Reset
+                     print("Resetting robot...")
+                     world.reset()
+                     joint_cmds = {name: 0.0 for name in aloha.dof_names}
+                     aloha.set_joint_positions(joint_cmds)
+                     continue
+
                 if k.endswith(".pos"):
                     joint_name = k.replace(".pos", "")
                     joint_cmds[joint_name] = v
@@ -226,6 +295,20 @@ def main():
 
         # 2. Get Obs & Publish
         obs = aloha.get_observations()
+        
+        # Save frame if recording
+        # (Pass current command as action label for now, though it's imperfect as it's the *commanded* not *measured* action)
+        if recorder.is_recording:
+            # Reconstruct action dict from parsed values
+            # This is a simplification; ideally we log exactly what we sent
+            action_log = {
+                "x.vel": vx,
+                "y.vel": vy,
+                "theta.vel": vth,
+                # Add arm joint targets if we had them easily accessible here
+            }
+            recorder.save_frame(obs, action_log)
+        
         encoded_obs = {}
         
         # Process images
