@@ -39,20 +39,45 @@ def zmq_worker(ip='127.0.0.1', port=5556):
 
 def generate_frames(camera_name):
     while True:
-        frame_data = None
+        frame_bytes = None
+        detections = []
+        
         with lock:
             if camera_name in latest_observation:
                 b64_str = latest_observation[camera_name]
                 if b64_str:
                     try:
-                        # It is already a base64 encoded JPG from the host
-                        frame_data = base64.b64decode(b64_str)
+                        frame_bytes = base64.b64decode(b64_str)
                     except Exception:
                         pass
+            
+            # Get detections
+            raw_dets = latest_observation.get("detections", {})
+            if isinstance(raw_dets, dict):
+                detections = raw_dets.get(camera_name, [])
         
-        if frame_data:
+        if frame_bytes:
+            # Decode to image to draw on it
+            nparr = np.frombuffer(frame_bytes, np.uint8)
+            img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+            
+            if img is not None:
+                # Draw detections
+                for det in detections:
+                    box = det.get("box", [])
+                    label = det.get("label", "obj")
+                    if len(box) == 4:
+                        x1, y1, x2, y2 = map(int, box)
+                        cv2.rectangle(img, (x1, y1), (x2, y2), (0, 255, 0), 2)
+                        cv2.putText(img, label, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
+                
+                # Re-encode
+                ret, buffer = cv2.imencode('.jpg', img)
+                if ret:
+                    frame_bytes = buffer.tobytes()
+
             yield (b'--frame\r\n'
-                   b'Content-Type: image/jpeg\r\n\r\n' + frame_data + b'\r\n')
+                   b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
         else:
             # Return a blank or placeholder image if no data
             pass
@@ -71,8 +96,13 @@ def video_feed(camera_name):
 @app.route('/api/status')
 def get_status():
     with lock:
-        # Filter out large image data for status endpoint
-        status = {k: v for k, v in latest_observation.items() if not (isinstance(v, str) and len(v) > 1000)}
+        # Filter out large image data for status endpoint, but keep the key
+        status = {}
+        for k, v in latest_observation.items():
+            if isinstance(v, str) and len(v) > 1000:
+                status[k] = "__IMAGE_DATA__"
+            else:
+                status[k] = v
         status['connected'] = connected
     return jsonify(status)
 
