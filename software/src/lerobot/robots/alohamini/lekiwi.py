@@ -67,7 +67,6 @@ class LeKiwi(Robot):
                 "arm_left_shoulder_lift": Motor(2, "sts3215", norm_mode_body),
                 "arm_left_elbow_flex": Motor(3, "sts3215", norm_mode_body),
                 "arm_left_wrist_flex": Motor(4, "sts3215", norm_mode_body),
-                #"left_wrist_yaw": Motor(5, "sts3215", norm_mode_body),
                 "arm_left_wrist_roll": Motor(5, "sts3215", norm_mode_body),
                 "arm_left_gripper": Motor(6, "sts3215", MotorNormMode.RANGE_0_100),
                 # base
@@ -87,10 +86,8 @@ class LeKiwi(Robot):
                 "arm_right_shoulder_lift": Motor(2, "sts3215", norm_mode_body),
                 "arm_right_elbow_flex": Motor(3, "sts3215", norm_mode_body),
                 "arm_right_wrist_flex": Motor(4, "sts3215", norm_mode_body),
-                #"right_wrist_yaw": Motor(5, "sts3215", norm_mode_body),
                 "arm_right_wrist_roll": Motor(5, "sts3215", norm_mode_body),
                 "arm_right_gripper": Motor(6, "sts3215", MotorNormMode.RANGE_0_100),
-                #"lift_axis": Motor(12, "sts3215", MotorNormMode.DEGREES),
             },
             calibration=self.calibration,
         )
@@ -98,12 +95,8 @@ class LeKiwi(Robot):
 
         self.left_arm_motors  = [m for m in self.left_bus.motors        if m.startswith("arm_left_")]
         self.base_motors      = [m for m in self.left_bus.motors        if m.startswith("base_")]
-        #self.left_arm_motors  = [m for m in self.left_bus.motors        if m.startswith("right_arm_")]
 
         self.right_arm_motors = [m for m in (self.right_bus.motors if self.right_bus else []) if m.startswith("arm_right_")]
-
-        # self.arm_motors = [motor for motor in self.left_bus.motors if motor.startswith("arm")]
-        # self.base_motors = [motor for motor in self.left_bus.motors if motor.startswith("base")]
 
         self.cameras = make_cameras_from_configs(config.cameras)
 
@@ -136,8 +129,8 @@ class LeKiwi(Robot):
                 "x.vel",
                 "y.vel",
                 "theta.vel",
-                "lift_axis.height_mm",   # ← 新增
-                #"lift_axis.vel",         # ← 新增（可选，做调试用）
+                "lift_axis.height_mm",   # Added
+                #"lift_axis.vel",         # Added (optional, for debugging)
             ),
             float,
         )
@@ -156,10 +149,6 @@ class LeKiwi(Robot):
     def action_features(self) -> dict[str, type]:
         return self._state_ft
 
-    # @property
-    # def is_connected(self) -> bool:
-    #     return self.left_bus.is_connected and all(cam.is_connected for cam in self.cameras.values())
-    
     @property
     def is_connected(self) -> bool:
         cams_ok = all(cam.is_connected for cam in self.cameras.values())
@@ -186,7 +175,7 @@ class LeKiwi(Robot):
         logger.info(f"{self} connected.")
 
         self.lift.home()
-        print("Lift axis homed to 0mm.")
+        logger.info("Lift axis homed to 0mm.")
 
         
 
@@ -232,7 +221,7 @@ class LeKiwi(Robot):
             self.left_bus.write("Operating_Mode", name, OperatingMode.POSITION.value)
 
         input("Move LEFT arm to the middle of its range of motion, then press ENTER...")
-        left_homing = self.left_bus.set_half_turn_homings(self.left_arm_motors)  # 仅左臂条目
+        left_homing = self.left_bus.set_half_turn_homings(self.left_arm_motors)  # Only left arm items
 
         for wheel in self.base_motors:
             left_homing[wheel] = 0
@@ -317,8 +306,6 @@ class LeKiwi(Robot):
         for name in self.base_motors:
             self.left_bus.write("Operating_Mode", name, OperatingMode.VELOCITY.value)
 
-        #self.left_bus.enable_torque()
-
         self.right_bus.disable_torque()
         self.right_bus.configure_motors()
         for name in self.right_arm_motors:
@@ -326,9 +313,7 @@ class LeKiwi(Robot):
             self.right_bus.write("P_Coefficient", name, 16)
             self.right_bus.write("I_Coefficient", name, 0)
             self.right_bus.write("D_Coefficient", name, 32)
-        #self.right_bus.enable_torque()
 
-        #self.lift.configure()
 
 
 
@@ -485,9 +470,7 @@ class LeKiwi(Robot):
 
         # Read actuators position for arm and vel for base
         start = time.perf_counter()
-        # arm_pos = self.left_bus.sync_read("Present_Position", self.arm_motors)
-
-        #print(f"Left arm motors: {self.left_arm_motors}, Right arm motors: {self.right_arm_motors}")  # debug
+        
         left_pos = self.left_bus.sync_read("Present_Position", self.left_arm_motors)   # left_arm_*
 
 
@@ -507,7 +490,6 @@ class LeKiwi(Robot):
 
         obs_dict = {**left_arm_state, **right_arm_state,**base_vel}
         self.lift.contribute_observation(obs_dict)
-        #print(f"Observation dict so far: {obs_dict}")  # debug
 
         dt_ms = (time.perf_counter() - start) * 1e3
         logger.debug(f"{self} read state: {dt_ms:.1f}ms")
@@ -553,12 +535,7 @@ class LeKiwi(Robot):
 
         # Cap goal position when too far away from present position.
         # /!\ Slower fps expected due to reading from the follower.
-        # if self.config.max_relative_target is not None:
-        #     present_pos = self.left_bus.sync_read("Present_Position", self.arm_motors)
-        #     goal_present_pos = {key: (g_pos, present_pos[key]) for key, g_pos in arm_goal_pos.items()}
-        #     arm_safe_goal_pos = ensure_safe_goal_position(goal_present_pos, self.config.max_relative_target)
-        #     arm_goal_pos = arm_safe_goal_pos
-
+        
         self.lift.apply_action(action)
 
         if left_pos and self.config.max_relative_target is not None:
@@ -573,13 +550,6 @@ class LeKiwi(Robot):
 
 
         # Send goal position to the actuators
-        # arm_goal_pos_raw = {k.replace(".pos", ""): v for k, v in arm_goal_pos.items()}
-        # self.left_bus.sync_write("Goal_Position", arm_goal_pos_raw)
-        # self.left_bus.sync_write("Goal_Velocity", base_wheel_goal_vel)
-
-        # return {**arm_goal_pos, **base_goal_vel}
-
-        #print(f"[{filename}:{lineno}]Sending left_pos:{left_pos}, right_pos:{right_pos}, base_wheel_goal_vel:{base_wheel_goal_vel}")  # debug
     
         if left_pos:
             self.left_bus.sync_write("Goal_Position", {k.replace(".pos", ""): v for k, v in left_pos.items()})
@@ -597,7 +567,7 @@ class LeKiwi(Robot):
 
     def read_and_check_currents(self, limit_ma, print_currents):
         """Read left/right bus currents (mA), print them, and enforce overcurrent protection"""
-        scale = 6.5  # sts3215 电流单位转换系数
+        scale = 6.5  # sts3215 current unit conversion coefficient
         left_curr_raw = {}
         left_curr_raw = self.left_bus.sync_read("Present_Current", list(self.left_bus.motors.keys()))
         right_curr_raw = {}
@@ -606,15 +576,15 @@ class LeKiwi(Robot):
 
         if print_currents:
             left_line = "{" + ",".join(str(int(v * scale)) for v in left_curr_raw.values()) + "}"
-            print(f"Left Bus currents: {left_line}")
+            logger.info(f"Left Bus currents: {left_line}")
             if right_curr_raw:
                 right_line = "{" + ",".join(str(int(v * scale)) for v in right_curr_raw.values()) + "}"
-                print(f"Right Bus currents: {right_line}")
+                logger.info(f"Right Bus currents: {right_line}")
 
         for name, raw in {**left_curr_raw, **right_curr_raw}.items():
             current_ma = float(raw) * scale
             if current_ma > limit_ma:
-                print(f"[Overcurrent] {name}: {current_ma:.1f} mA > {limit_ma:.1f} mA, disconnecting!")
+                logger.error(f"[Overcurrent] {name}: {current_ma:.1f} mA > {limit_ma:.1f} mA, disconnecting!")
                 try:
                     self.stop_base()
                 except Exception:
@@ -622,7 +592,7 @@ class LeKiwi(Robot):
                 try:
                     self.disconnect()
                 except Exception as e:
-                    print(f"[Overcurrent] disconnect error: {e}")
+                    logger.error(f"[Overcurrent] disconnect error: {e}")
                 sys.exit(1)
 
         return {k: round(v * scale, 1) for k, v in {**left_curr_raw, **right_curr_raw}.items()}
