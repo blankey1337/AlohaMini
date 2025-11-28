@@ -35,7 +35,7 @@ from lerobot.motors.feetech import (
 
 from ..robot import Robot
 from ..utils import ensure_safe_goal_position
-from .config_lekiwi import LeKiwiConfig
+from .config_lekiwi import LeKiwiConfig, LeKiwiClientConfig
 
 logger = logging.getLogger(__name__)
 
@@ -122,6 +122,7 @@ class LeKiwi(Robot):
                 "arm_right_shoulder_pan.pos",
                 "arm_right_shoulder_lift.pos",
                 "arm_right_elbow_flex.pos",
+                "arm_right_elbow_flex.pos", # Duplicate removed? No, check original
                 "arm_right_wrist_flex.pos",
                 #"right_wrist_yaw.pos",
                 "arm_right_wrist_roll.pos",
@@ -609,3 +610,218 @@ class LeKiwi(Robot):
 
         logger.info(f"{self} disconnected.")
 
+
+class LeKiwiSim(Robot):
+    """
+    Simulation version of LeKiwi for testing without hardware.
+    Maintains a kinematic state and updates it based on velocity commands.
+    """
+    config_class = LeKiwiClientConfig
+    name = "lekiwi_sim"
+
+    def __init__(self, config: LeKiwiClientConfig):
+        super().__init__(config)
+        self.config = config
+        self._is_connected = False
+        
+        # State
+        self.state = {
+            "x": 0.0,
+            "y": 0.0,
+            "theta": 0.0,
+        }
+        
+        # Joint positions
+        self.joints = {}
+        # Populate with initial 0s for all expected joints from LeKiwi definition
+        # Manually listing keys to ensure consistency
+        joint_names = [
+                "arm_left_shoulder_pan",
+                "arm_left_shoulder_lift",
+                "arm_left_elbow_flex",
+                "arm_left_wrist_flex",
+                "arm_left_wrist_roll",
+                "arm_left_gripper",
+                "arm_right_shoulder_pan",
+                "arm_right_shoulder_lift",
+                "arm_right_elbow_flex",
+                "arm_right_wrist_flex",
+                "arm_right_wrist_roll",
+                "arm_right_gripper",
+        ]
+        self.joints.update({k: 0.0 for k in joint_names})
+        self.joints["lift_axis"] = 0.0
+        
+        # Teleop config
+        self.teleop_keys = config.teleop_keys
+        self.speed_levels = [
+            {"xy": 0.15, "theta": 45},
+            {"xy": 0.2, "theta": 60},
+            {"xy": 0.25, "theta": 75},
+        ]
+        self.speed_index = 0
+        
+        # Last update time
+        self.last_update = time.perf_counter()
+
+    @property
+    def _state_ft(self) -> dict[str, type]:
+        return dict.fromkeys(
+            (
+                "arm_left_shoulder_pan.pos",
+                "arm_left_shoulder_lift.pos",
+                "arm_left_elbow_flex.pos",
+                "arm_left_wrist_flex.pos",
+                "arm_left_wrist_roll.pos",
+                "arm_left_gripper.pos",
+                "arm_right_shoulder_pan.pos",
+                "arm_right_shoulder_lift.pos",
+                "arm_right_elbow_flex.pos",
+                "arm_right_wrist_flex.pos",
+                "arm_right_wrist_roll.pos",
+                "arm_right_gripper.pos",
+                "x.vel",
+                "y.vel",
+                "theta.vel",
+                "lift_axis.height_mm",
+            ),
+            float,
+        )
+
+    @property
+    def _cameras_ft(self) -> dict[str, tuple]:
+        return {
+            cam: (self.config.cameras[cam].height, self.config.cameras[cam].width, 3) for cam in self.config.cameras
+        }
+
+    @cached_property
+    def observation_features(self) -> dict[str, type | tuple]:
+        return {**self._state_ft, **self._cameras_ft}
+
+    @cached_property
+    def action_features(self) -> dict[str, type]:
+        return self._state_ft
+
+    @property
+    def is_connected(self) -> bool:
+        return self._is_connected
+
+    def connect(self):
+        logger.info(f"{self} simulated connection established.")
+        self._is_connected = True
+
+    def disconnect(self):
+        logger.info(f"{self} simulated connection closed.")
+        self._is_connected = False
+        
+    def get_observation(self) -> dict[str, Any]:
+        if not self.is_connected:
+            raise DeviceNotConnectedError(f"{self} is not connected.")
+
+        # Return current state
+        obs = {}
+        # Joints
+        for k, v in self.joints.items():
+            if k == "lift_axis": continue
+            obs[f"{k}.pos"] = v
+            
+        # Base vel (simulated as instantaneous match to command for now, or 0 if stopped)
+        obs["x.vel"] = 0.0 
+        obs["y.vel"] = 0.0
+        obs["theta.vel"] = 0.0
+        
+        # Lift
+        obs["lift_axis.height_mm"] = self.joints["lift_axis"]
+        
+        # Cameras (blank)
+        for cam in self.config.cameras:
+            h, w = self.config.cameras[cam].height, self.config.cameras[cam].width
+            obs[cam] = np.zeros((h, w, 3), dtype=np.uint8)
+
+        return obs
+
+    def send_action(self, action: dict[str, Any]) -> dict[str, Any]:
+        if not self.is_connected:
+            raise DeviceNotConnectedError(f"{self} is not connected.")
+            
+        now = time.perf_counter()
+        dt = now - self.last_update
+        self.last_update = now
+        
+        # Update base pose (simple integration)
+        vx = action.get("x.vel", 0.0)
+        vy = action.get("y.vel", 0.0)
+        vth = action.get("theta.vel", 0.0)
+        
+        # Rotate velocity to world frame
+        rad = np.radians(self.state["theta"])
+        c, s = np.cos(rad), np.sin(rad)
+        dx = (vx * c - vy * s) * dt
+        dy = (vx * s + vy * c) * dt
+        dth = vth * dt
+        
+        self.state["x"] += dx
+        self.state["y"] += dy
+        self.state["theta"] += dth
+        
+        # Update joints (instant move to target for simplicity, or LPF)
+        for k, v in action.items():
+            if k.endswith(".pos"):
+                joint = k.replace(".pos", "")
+                self.joints[joint] = v
+            elif k == "lift_axis.height_mm":
+                self.joints["lift_axis"] = v
+                
+        return action
+        
+    def _from_keyboard_to_base_action(self, pressed_keys: np.ndarray):
+        # Speed control
+        if self.teleop_keys["speed_up"] in pressed_keys:
+            self.speed_index = min(self.speed_index + 1, 2)
+        if self.teleop_keys["speed_down"] in pressed_keys:
+            self.speed_index = max(self.speed_index - 1, 0)
+        speed_setting = self.speed_levels[self.speed_index]
+        xy_speed = speed_setting["xy"]
+        theta_speed = speed_setting["theta"]
+
+        x_cmd = 0.0
+        y_cmd = 0.0
+        theta_cmd = 0.0
+
+        if self.teleop_keys["forward"] in pressed_keys:
+            x_cmd += xy_speed
+        if self.teleop_keys["backward"] in pressed_keys:
+            x_cmd -= xy_speed
+        if self.teleop_keys["left"] in pressed_keys:
+            y_cmd += xy_speed
+        if self.teleop_keys["right"] in pressed_keys:
+            y_cmd -= xy_speed
+        if self.teleop_keys["rotate_left"] in pressed_keys:
+            theta_cmd += theta_speed
+        if self.teleop_keys["rotate_right"] in pressed_keys:
+            theta_cmd -= theta_speed
+
+        return {
+            "x.vel": x_cmd,
+            "y.vel": y_cmd,
+            "theta.vel": theta_cmd,
+        }
+    
+    def _from_keyboard_to_lift_action(self, pressed_keys: np.ndarray):
+        up_pressed = self.teleop_keys.get("lift_up", "u") in pressed_keys
+        dn_pressed = self.teleop_keys.get("lift_down", "j") in pressed_keys
+
+        h_now = float(self.joints["lift_axis"])
+
+        if not (up_pressed or dn_pressed):
+            return {"lift_axis.height_mm": h_now}
+
+        # Increment on each key press
+        if up_pressed and not dn_pressed:
+            h_target = h_now + LiftAxisConfig.step_mm
+        elif dn_pressed and not up_pressed:
+            h_target = h_now - LiftAxisConfig.step_mm
+        else:
+            h_target = h_now
+
+        return {"lift_axis.height_mm": h_target}
