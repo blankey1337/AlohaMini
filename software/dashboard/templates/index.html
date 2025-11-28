@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AlohaMini Dashboard</title>
+    <style>
+        body { font-family: sans-serif; background: #222; color: #eee; margin: 0; padding: 20px; }
+        .container { display: flex; flex-wrap: wrap; gap: 20px; }
+        .camera-grid { display: flex; flex-wrap: wrap; gap: 10px; flex: 2; }
+        .camera-box { background: #333; padding: 5px; border-radius: 5px; }
+        .camera-box img { max-width: 100%; height: auto; display: block; }
+        .camera-title { text-align: center; font-size: 0.9em; margin-bottom: 5px; }
+        .status-panel { flex: 1; background: #333; padding: 15px; border-radius: 5px; min-width: 300px; }
+        table { width: 100%; border-collapse: collapse; }
+        td, th { padding: 5px; border-bottom: 1px solid #444; font-size: 0.9em; }
+        th { text-align: left; color: #aaa; }
+        .value { font-family: monospace; color: #4f4; }
+    </style>
+</head>
+<body>
+    <h1>AlohaMini Dashboard</h1>
+    
+    <div class="container">
+        <div class="camera-grid" id="cameraGrid">
+            <!-- Cameras will be injected here -->
+        </div>
+        
+        <div class="status-panel">
+            <h3>Robot State</h3>
+            <table id="statusTable">
+                <!-- Status rows injected here -->
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const knownCameras = ['head_top', 'head_back', 'head_front', 'wrist_left', 'wrist_right', 'cam_high', 'cam_low', 'cam_left_wrist', 'cam_right_wrist'];
+        const activeCameras = new Set();
+
+        function updateStatus() {
+            fetch('/api/status')
+                .then(response => response.json())
+                .then(data => {
+                    const table = document.getElementById('statusTable');
+                    let rows = '';
+                    
+                    // Update Status Table
+                    for (const [key, value] of Object.entries(data)) {
+                        // Skip camera data (if any leaks into status) and long strings
+                        if (typeof value === 'string' && value.length > 100) continue;
+                        
+                        // Check if this key might be a camera
+                        // If it's a camera key and not in activeCameras, add it
+                        if (knownCameras.includes(key) || key.includes('cam') || key.includes('wrist')) {
+                           if (!activeCameras.has(key) && !document.getElementById('cam-' + key)) {
+                               addCamera(key);
+                               activeCameras.add(key);
+                           }
+                           continue; // Don't show camera keys in text table
+                        }
+
+                        let displayValue = value;
+                        if (typeof value === 'number') displayValue = value.toFixed(2);
+                        
+                        rows += `<tr><th>${key}</th><td class="value">${displayValue}</td></tr>`;
+                    }
+                    table.innerHTML = rows;
+                })
+                .catch(err => console.error("Error fetching status:", err));
+        }
+
+        function addCamera(name) {
+            const grid = document.getElementById('cameraGrid');
+            const div = document.createElement('div');
+            div.className = 'camera-box';
+            div.id = 'cam-' + name;
+            div.innerHTML = `
+                <div class="camera-title">${name}</div>
+                <img src="/video_feed/${name}" alt="${name}" width="320" height="240">
+            `;
+            grid.appendChild(div);
+        }
+
+        setInterval(updateStatus, 1000);
+        updateStatus();
+    </script>
+</body>
+</html>
