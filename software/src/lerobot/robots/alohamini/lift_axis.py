@@ -69,25 +69,31 @@ class LiftAxis:
         self._configured = False
 
     def attach(self) -> None:
-        if not self.enabled: return
+        if not self.enabled:
+            return
         if self.cfg.name not in self._bus.motors:
             self._bus.motors[self.cfg.name] = Motor(self.cfg.motor_id, self.cfg.motor_model, MotorNormMode.DEGREES)
 
     def configure(self) -> None:
-        if not self.enabled: return
-        if self._configured: return   
+        if not self.enabled:
+            return
+        if self._configured:
+            return   
         self._bus.write("Operating_Mode", self.cfg.name, OperatingMode.VELOCITY.value)
         self._last_tick = float(self._bus.read("Present_Position", self.cfg.name, normalize=False))
         self._extended_ticks = 0.0
         self._configured = True
 
     def _update_extended_ticks(self) -> None:
-        if not self.enabled: return
+        if not self.enabled:
+            return
         cur = float(self._bus.read("Present_Position", self.cfg.name, normalize=False))  # 0..4095
         delta = cur - self._last_tick
         half = self._ticks_per_rev * 0.5
-        if   delta > +half: delta -= self._ticks_per_rev
-        elif delta < -half: delta += self._ticks_per_rev
+        if delta > +half:
+            delta -= self._ticks_per_rev
+        elif delta < -half:
+            delta += self._ticks_per_rev
         self._extended_ticks += delta
         self._last_tick = cur
 
@@ -95,7 +101,8 @@ class LiftAxis:
         return self.cfg.dir_sign * self._extended_ticks * self._deg_per_tick 
 
     def get_height_mm(self) -> float:
-        if not self.enabled: return 0.0
+        if not self.enabled:
+            return 0.0
         self._update_extended_ticks()
         raw_mm = (self._extended_deg() - self._z0_deg) * self._mm_per_deg
         #print(f"[lift_axis.get_height_mm] raw_mm={raw_mm:.2f}, extended_deg={self._extended_deg():.2f}, z0_deg={self._z0_deg:.2f}")  # debug
@@ -103,7 +110,8 @@ class LiftAxis:
     
     # Homing (down to hard stop → rebound, set z=0mm)
     def home(self, use_current: bool = True) -> None:
-        if not self.enabled: return
+        if not self.enabled:
+            return
         self.configure()
         name = self.cfg.name
         # 向下
@@ -126,13 +134,15 @@ class LiftAxis:
                     print(f"[lift_axis.home] Present_Current={cur_ma} mA")  # debug
                     print(f"[lift_axis.home] Present_Position={now_tick} ticks")  # debug
 
-                except Exception: cur_ma = 0
+                except Exception:
+                    cur_ma = 0
             if (use_current and cur_ma >= self.cfg.home_stall_current_ma) or (not moved):
                 print(f"[lift_axis.home] Stalled at current={cur_ma} mA, moved={moved}")  # debug
                 stuck += 1
             else:
                 stuck = 0
-            if stuck >= 2: break
+            if stuck >= 2:
+                break
         #self._bus.write("Goal_Velocity", name, 0)
         self._bus.write("Torque_Enable", name, 0)
         print("Disable torque output (motor will be released)")
@@ -147,17 +157,20 @@ class LiftAxis:
 
 
     def set_height_target_mm(self, height_mm: float) -> None:
-        if not self.enabled: return
+        if not self.enabled:
+            return
         self._target_mm = max(self.cfg.soft_min_mm, min(self.cfg.soft_max_mm, height_mm))
 
     def clear_target(self) -> None:
-        if not self.enabled: return
+        if not self.enabled:
+            return
         self._target_mm = None
         self._bus.write("Goal_Velocity", self.cfg.name, 0.0)
 
     def update(self) -> None:
         """Call every frame (recommended 50–100 Hz)"""
-        if not self.enabled or self._target_mm is None: return
+        if not self.enabled or self._target_mm is None:
+            return
         cur_mm = self.get_height_mm()
         err = self._target_mm - cur_mm
         # Position reached?
@@ -178,7 +191,8 @@ class LiftAxis:
     # Lightweight coupling with action/obs
     def contribute_observation(self, obs: Dict[str, float]) -> None:
         """Export convenient observation fields: height_mm and velocity"""
-        if not self.enabled: return
+        if not self.enabled:
+            return
         obs[f"{self.cfg.name}.height_mm"] = self.get_height_mm()
         try:
             obs[f"{self.cfg.name}.vel"] = int(self._bus.read("Present_Velocity", self.cfg.name, normalize=False))
@@ -192,7 +206,8 @@ class LiftAxis:
         - f"{name}.vel"      : target velocity     (advanced)
         """
         #print(f"[lift_axis.apply_action] action={action}")  # debug
-        if not self.enabled: return
+        if not self.enabled:
+            return
         key_h = f"{self.cfg.name}.height_mm"
         key_v = f"{self.cfg.name}.vel"
         if key_h in action:
