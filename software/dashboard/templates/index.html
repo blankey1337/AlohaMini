@@ -60,9 +60,13 @@
                         }
 
                         let displayValue = value;
-                        if (typeof value === 'number') displayValue = value.toFixed(2);
+                        if (typeof value === 'number') {
+                            displayValue = value.toFixed(2);
+                        } else if (typeof value === 'object') {
+                            displayValue = JSON.stringify(value, null, 2);
+                        }
                         
-                        rows += `<tr><th>${key}</th><td class="value">${displayValue}</td></tr>`;
+                        rows += `<tr><th>${key}</th><td class="value" style="white-space: pre;">${displayValue}</td></tr>`;
                     }
                     table.innerHTML = rows;
                 })
