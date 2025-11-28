@@ -77,6 +77,14 @@ class LeKiwiSim:
             SimObject("table", 0.0, 1.5, 0.8, 0.4, (42, 42, 165), "rectangle"), # Brownish Table
         ]
 
+        # Semantic Map (Room coordinates)
+        self.rooms = {
+            "Living Room": {"x": 0.0, "y": 0.0},
+            "Kitchen": {"x": 2.0, "y": 2.0},
+            "Bedroom": {"x": -2.0, "y": 1.0},
+            "Hallway": {"x": 0.0, "y": 3.0}
+        }
+
         # Joint positions
         self.joints = {}
         joint_names = [
@@ -268,6 +276,7 @@ class LeKiwiSim:
         
         # Simulated Perception
         obs["detections"] = {}
+        obs["rooms"] = self.rooms # Broadcast room locations too
         
         for cam, cfg in self.config.cameras.items():
             img, dets = self.render_camera(cam, cfg.width, cfg.height)
