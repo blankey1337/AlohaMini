@@ -19,12 +19,17 @@ import json
 import logging
 import time
 import sys
+import argparse
 
 import cv2
 import zmq
 
-from .config_lekiwi import LeKiwiConfig, LeKiwiHostConfig
-from .lekiwi import LeKiwi
+try:
+    from .config_lekiwi import LeKiwiConfig, LeKiwiHostConfig, LeKiwiClientConfig
+    from .lekiwi import LeKiwi, LeKiwiSim
+except ImportError:
+    from config_lekiwi import LeKiwiConfig, LeKiwiHostConfig, LeKiwiClientConfig
+    from lekiwi import LeKiwi, LeKiwiSim
 
 
 class LeKiwiHost:
@@ -49,10 +54,19 @@ class LeKiwiHost:
  
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--sim", action="store_true", help="Run in simulation mode")
+    args = parser.parse_args()
+
     logging.info("Configuring LeKiwi")
-    robot_config = LeKiwiConfig()
-    robot_config.id = "AlohaMiniRobot"
-    robot = LeKiwi(robot_config)
+    if args.sim:
+        logging.info("Using LeKiwiSim")
+        robot_config = LeKiwiClientConfig(remote_ip="localhost", id="AlohaMiniSim")
+        robot = LeKiwiSim(robot_config)
+    else:
+        robot_config = LeKiwiConfig()
+        robot_config.id = "AlohaMiniRobot"
+        robot = LeKiwi(robot_config)
 
 
     logging.info("Connecting AlohaMini")
