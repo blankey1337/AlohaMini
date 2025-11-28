@@ -1,0 +1,36 @@
+name: Lint
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'software/**'
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - 'software/**'
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./software
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.10"
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        pip install ruff
+
+    - name: Run Ruff (Linting)
+      run: ruff check .
+

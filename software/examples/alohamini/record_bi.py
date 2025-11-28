@@ -28,13 +28,15 @@ def main():
     parser.add_argument("--task_description", type=str, default="My task description4", help="Task description")
     parser.add_argument("--remote_ip", type=str, default="127.0.0.1", help="Robot host IP")
     parser.add_argument("--robot_id", type=str, default="lekiwi_host", help="Robot ID")
+    parser.add_argument("--left_arm_port", type=str, default="/dev/am_arm_leader_left", help="Left leader arm port")
+    parser.add_argument("--right_arm_port", type=str, default="/dev/am_arm_leader_right", help="Right leader arm port")
     args = parser.parse_args()
 
     # === Robot and teleop config ===
     robot_config = LeKiwiClientConfig(remote_ip=args.remote_ip, id=args.robot_id)
     leader_arm_config = BiSO100LeaderConfig(
-        left_arm_port="/dev/am_arm_leader_left",
-        right_arm_port="/dev/am_arm_leader_right",
+        left_arm_port=args.left_arm_port,
+        right_arm_port=args.right_arm_port,
         id="so101_leader_bi3",
     )
     keyboard_config = KeyboardTeleopConfig()
