@@ -20,6 +20,11 @@ class NavigationService:
         self.running = False
         self.current_pose = None
         self.rooms = {}
+        self.detections = {}
+        self.nav_status = "idle" # idle, moving
+
+    def is_idle(self):
+        return self.nav_status == "idle"
         
     def start(self):
         self.running = True
@@ -39,6 +44,7 @@ class NavigationService:
             
         target = self.rooms[room_name]
         self.controller.set_target(target["x"], target["y"])
+        self.nav_status = "moving"
         return True
         
     def _loop(self):
@@ -51,6 +57,9 @@ class NavigationService:
                 # Update World Knowledge
                 if "rooms" in obs:
                     self.rooms = obs["rooms"]
+                
+                if "detections" in obs:
+                    self.detections = obs["detections"]
                     
                 self.current_pose = {
                     "x": obs.get("x_pos", 0.0),
@@ -61,9 +70,17 @@ class NavigationService:
                 # 2. Compute Control
                 action = self.controller.get_action(self.current_pose)
                 
-                # 3. Send Command (if active)
                 if action:
+                    # Check if action is zero (reached)
+                    if action["x.vel"] == 0 and action["theta.vel"] == 0:
+                        self.nav_status = "idle"
+                    else:
+                        self.nav_status = "moving"
+                        
                     self.pub_socket.send_string(json.dumps(action))
+                else:
+                    self.nav_status = "idle"
+
                     
             except Exception as e:
                 print(f"[NAV] Error: {e}")
