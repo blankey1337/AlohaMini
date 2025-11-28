@@ -1,14 +1,16 @@
-import sys
-import select
-import termios
-import tty
-import time
+import argparse
 import json
+import select
+import sys
+import termios
+import time
+import tty
+
 import zmq
 
 # --- Config ---
 CMD_PORT = 5555
-IP = "127.0.0.1"
+DEFAULT_IP = "127.0.0.1"
 
 msg = """
 Reading from the keyboard  and Publishing to ZMQ!
@@ -61,14 +63,18 @@ def limit(val, min_val, max_val):
     return max(min(val, max_val), min_val)
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--ip", default=DEFAULT_IP, help="IP address of the robot/simulation")
+    args = parser.parse_args()
+    
     settings = termios.tcgetattr(sys.stdin)
     
     # ZMQ Setup
     context = zmq.Context()
-    print(f"Connecting to command port {CMD_PORT}...")
+    print(f"Connecting to command port {CMD_PORT} at {args.ip}...")
     cmd_socket = context.socket(zmq.PUSH)
     cmd_socket.setsockopt(zmq.CONFLATE, 1)
-    cmd_socket.connect(f"tcp://{IP}:{CMD_PORT}")
+    cmd_socket.connect(f"tcp://{args.ip}:{CMD_PORT}")
 
     # State
     status = 0
