@@ -204,6 +204,14 @@ def main():
             vx, vy, vth = 0, 0, 0
             
             for k, v in cmd.items():
+                if k == "reset" and v is True:
+                     # Reset
+                     print("Resetting robot...")
+                     world.reset()
+                     joint_cmds = {name: 0.0 for name in aloha.dof_names}
+                     aloha.set_joint_positions(joint_cmds)
+                     continue
+
                 if k.endswith(".pos"):
                     joint_name = k.replace(".pos", "")
                     joint_cmds[joint_name] = v

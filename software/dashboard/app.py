@@ -5,7 +5,7 @@ import base64
 import zmq
 import cv2
 import numpy as np
-from flask import Flask, render_template, Response, jsonify
+from flask import Flask, render_template, Response, jsonify, request
 
 app = Flask(__name__)
 
@@ -13,14 +13,23 @@ app = Flask(__name__)
 latest_observation = {}
 lock = threading.Lock()
 connected = False
+recording = False
+cmd_socket = None
 
-def zmq_worker(ip='127.0.0.1', port=5556):
-    global latest_observation, connected
+def zmq_worker(ip='127.0.0.1', port=5556, cmd_port=5555):
+    global latest_observation, connected, cmd_socket
     context = zmq.Context()
+    
+    # Sub Socket
     socket = context.socket(zmq.SUB)
     socket.setsockopt(zmq.SUBSCRIBE, b"")
     socket.connect(f"tcp://{ip}:{port}")
     socket.setsockopt(zmq.CONFLATE, 1)
+    
+    # Cmd Socket (Push to Sim)
+    cmd_socket = context.socket(zmq.PUSH)
+    cmd_socket.setsockopt(zmq.CONFLATE, 1)
+    cmd_socket.connect(f"tcp://{ip}:{cmd_port}")
     
     print(f"Connecting to ZMQ Stream at {ip}:{port}...")
     
@@ -92,6 +101,28 @@ def index():
 def video_feed(camera_name):
     return Response(generate_frames(camera_name),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
+
+@app.route('/api/command', methods=['POST'])
+def send_command():
+    global cmd_socket
+    if not request.json or 'command' not in request.json:
+        return jsonify({'error': 'No command provided'}), 400
+    
+    cmd = request.json['command']
+    print(f"Received command: {cmd}")
+    
+    # Example handling
+    if cmd == 'reset_sim':
+        # Send reset command (Isaac Sim needs to handle this logic)
+        # For now, we can just zero out velocities or send a special flag
+        if cmd_socket:
+            cmd_socket.send_string(json.dumps({"reset": True}))
+            
+    elif cmd == 'start_recording':
+        # Trigger recording logic (would need to signal record_bi.py or similar)
+        pass
+        
+    return jsonify({'status': 'ok'})
 
 @app.route('/api/status')
 def get_status():
