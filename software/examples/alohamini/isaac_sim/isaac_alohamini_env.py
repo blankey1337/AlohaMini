@@ -84,6 +84,12 @@ class IsaacAlohaMini:
         self.add_camera("head_top", "/alohamini/base_link/top_cam", np.array([0, 0, 0.5]), np.array([0, 90, 0]))
 
     def add_camera(self, name, prim_path, translation, rotation_euler_deg):
+        # Apply domain randomization to camera position
+        # Small random perturbation to translation (+- 2cm) and rotation (+- 2 deg)
+        # This helps the model become robust to slight calibration errors in the real world
+        translation += np.random.uniform(-0.02, 0.02, size=3)
+        rotation_euler_deg += np.random.uniform(-2, 2, size=3)
+        
         # rotation in sim is usually quaternion
         # rotation_euler_deg: [x, y, z]
         rot_quat = euler_angles_to_quat(np.radians(rotation_euler_deg))
