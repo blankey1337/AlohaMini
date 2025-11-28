@@ -143,7 +143,8 @@ class LeKiwiClient(Robot):
         self.zmq_cmd_socket.connect(zmq_cmd_locator)
         self.zmq_cmd_socket.setsockopt(zmq.CONFLATE, 1)
 
-        self.zmq_observation_socket = self.zmq_context.socket(zmq.PULL)
+        self.zmq_observation_socket = self.zmq_context.socket(zmq.SUB)
+        self.zmq_observation_socket.setsockopt(zmq.SUBSCRIBE, b"")
         zmq_observations_locator = f"tcp://{self.remote_ip}:{self.port_zmq_observations}"
         self.zmq_observation_socket.connect(zmq_observations_locator)
         self.zmq_observation_socket.setsockopt(zmq.CONFLATE, 1)

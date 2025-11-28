@@ -4,5 +4,6 @@ rerun-sdk
 sounddevice
 dashscope
 scipy
+flask
+pyzmq
 ruff; extra == 'dev'
-
