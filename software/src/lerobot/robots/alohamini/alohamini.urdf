@@ -17,6 +17,11 @@
 
   <!-- Base Link (Chassis Center) -->
   <link name="base_link">
+    <inertial>
+      <mass value="10.0"/>
+      <origin xyz="0 0 0.05" rpy="0 0 0"/>
+      <inertia ixx="0.1" ixy="0.0" ixz="0.0" iyy="0.1" iyz="0.0" izz="0.1"/>
+    </inertial>
     <visual>
       <geometry>
         <cylinder length="0.05" radius="0.15"/>
@@ -32,7 +37,7 @@
     </collision>
   </link>
 
-  <!-- Omni Wheels (Visual only for now) -->
+  <!-- Omni Wheels -->
   <link name="left_wheel">
     <visual>
       <geometry>
@@ -41,11 +46,17 @@
       <origin xyz="0 0 0" rpy="1.5708 0 0"/>
       <material name="black"/>
     </visual>
+    <collision>
+      <geometry>
+        <cylinder length="0.02" radius="0.05"/>
+      </geometry>
+      <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+    </collision>
   </link>
   <joint name="base_left_wheel" type="continuous">
     <parent link="base_link"/>
     <child link="left_wheel"/>
-    <origin xyz="-0.1 0.1 0.05" rpy="0 0 2.0944"/> <!-- 120 deg -->
+    <origin xyz="-0.1 0.1 0.05" rpy="0 0 2.0944"/>
     <axis xyz="0 1 0"/>
   </joint>
 
@@ -57,11 +68,17 @@
       <origin xyz="0 0 0" rpy="1.5708 0 0"/>
       <material name="black"/>
     </visual>
+    <collision>
+      <geometry>
+        <cylinder length="0.02" radius="0.05"/>
+      </geometry>
+      <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+    </collision>
   </link>
   <joint name="base_right_wheel" type="continuous">
     <parent link="base_link"/>
     <child link="right_wheel"/>
-    <origin xyz="0.1 0.1 0.05" rpy="0 0 -2.0944"/> <!-- -120 deg -->
+    <origin xyz="0.1 0.1 0.05" rpy="0 0 -2.0944"/>
     <axis xyz="0 1 0"/>
   </joint>
 
@@ -73,6 +90,12 @@
       <origin xyz="0 0 0" rpy="1.5708 0 0"/>
       <material name="black"/>
     </visual>
+    <collision>
+      <geometry>
+        <cylinder length="0.02" radius="0.05"/>
+      </geometry>
+      <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+    </collision>
   </link>
   <joint name="base_back_wheel" type="continuous">
     <parent link="base_link"/>
@@ -80,7 +103,6 @@
     <origin xyz="0 -0.15 0.05" rpy="0 0 0"/>
     <axis xyz="0 1 0"/>
   </joint>
-
 
   <!-- Lift Column -->
   <link name="lift_base_link">
@@ -91,6 +113,12 @@
       <origin xyz="0 0 0.3" rpy="0 0 0"/>
       <material name="white"/>
     </visual>
+    <collision>
+      <geometry>
+        <box size="0.05 0.05 0.6"/>
+      </geometry>
+      <origin xyz="0 0 0.3" rpy="0 0 0"/>
+    </collision>
   </link>
   <joint name="lift_base_joint" type="fixed">
     <parent link="base_link"/>
@@ -100,6 +128,11 @@
 
   <!-- Lift Moving Platform -->
   <link name="lift_link">
+    <inertial>
+      <mass value="0.5"/>
+      <origin xyz="0.05 0 0" rpy="0 0 0"/>
+      <inertia ixx="0.01" ixy="0.0" ixz="0.0" iyy="0.01" iyz="0.0" izz="0.01"/>
+    </inertial>
     <visual>
       <geometry>
         <box size="0.2 0.05 0.02"/>
@@ -107,6 +140,12 @@
       <origin xyz="0.05 0 0" rpy="0 0 0"/>
       <material name="orange"/>
     </visual>
+    <collision>
+      <geometry>
+        <box size="0.12 0.05 0.02"/>
+      </geometry>
+      <origin xyz="0.09 0 0" rpy="0 0 0"/>
+    </collision>
   </link>
   <joint name="lift_axis" type="prismatic">
     <parent link="lift_base_link"/>
@@ -129,6 +168,9 @@
       <geometry><box size="0.04 0.04 0.04"/></geometry>
       <material name="grey"/>
     </visual>
+    <collision>
+      <geometry><box size="0.04 0.04 0.04"/></geometry>
+    </collision>
   </link>
 
   <joint name="arm_left_shoulder_pan" type="revolute">
@@ -140,6 +182,7 @@
   </joint>
   <link name="left_shoulder_pan_link">
     <visual><geometry><cylinder length="0.04" radius="0.02"/></geometry><material name="black"/></visual>
+    <collision><geometry><cylinder length="0.04" radius="0.02"/></geometry></collision>
   </link>
 
   <joint name="arm_left_shoulder_lift" type="revolute">
@@ -155,6 +198,10 @@
         <origin xyz="0.075 0 0" rpy="0 0 0"/>
         <material name="white"/>
      </visual>
+     <collision>
+        <geometry><box size="0.15 0.03 0.03"/></geometry>
+        <origin xyz="0.075 0 0" rpy="0 0 0"/>
+     </collision>
   </link>
 
   <joint name="arm_left_elbow_flex" type="revolute">
@@ -170,6 +217,10 @@
         <origin xyz="0.075 0 0" rpy="0 0 0"/>
         <material name="white"/>
      </visual>
+     <collision>
+        <geometry><box size="0.15 0.03 0.03"/></geometry>
+        <origin xyz="0.075 0 0" rpy="0 0 0"/>
+     </collision>
   </link>
 
   <joint name="arm_left_wrist_flex" type="revolute">
@@ -180,7 +231,14 @@
     <limit lower="-3.14" upper="3.14" effort="10" velocity="3.0"/>
   </joint>
   <link name="left_wrist_flex_link">
-    <visual><geometry><cylinder length="0.04" radius="0.015"/></geometry><material name="black"/></visual>
+    <visual>
+      <geometry>
+        <mesh filename="meshes/wrist_flex.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <material name="black"/>
+    </visual>
+    <collision><geometry><cylinder length="0.04" radius="0.015"/></geometry></collision>
   </link>
 
   <joint name="arm_left_wrist_roll" type="revolute">
@@ -192,25 +250,58 @@
   </joint>
   <link name="left_gripper_base_link">
      <visual>
-        <geometry><box size="0.05 0.02 0.04"/></geometry>
-        <origin xyz="0.025 0 0" rpy="0 0 0"/>
+        <geometry>
+          <mesh filename="meshes/gripper_base.stl" scale="0.001 0.001 0.001"/>
+        </geometry>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
         <material name="grey"/>
      </visual>
+     <collision>
+        <geometry><box size="0.05 0.02 0.04"/></geometry>
+        <origin xyz="0.025 0 0" rpy="0 0 0"/>
+     </collision>
   </link>
 
   <joint name="arm_left_gripper" type="revolute">
     <parent link="left_gripper_base_link"/>
     <child link="left_gripper_finger"/>
-    <origin xyz="0.05 0 0" rpy="0 0 0"/>
+    <origin xyz="0.05 0.02 0" rpy="0 0 0"/>
     <axis xyz="0 0 1"/>
     <limit lower="-1.0" upper="1.0" effort="5" velocity="5.0"/>
   </joint>
   <link name="left_gripper_finger">
     <visual>
-        <geometry><box size="0.04 0.01 0.01"/></geometry>
-        <origin xyz="0.02 0 0" rpy="0 0 0"/>
+        <geometry>
+          <mesh filename="meshes/gripper_finger.stl" scale="0.001 0.001 0.001"/>
+        </geometry>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
         <material name="black"/>
      </visual>
+    <collision>
+        <geometry><box size="0.04 0.01 0.01"/></geometry>
+        <origin xyz="0.02 0 0" rpy="0 0 0"/>
+     </collision>
+  </link>
+  
+  <joint name="arm_left_gripper_2" type="revolute">
+    <parent link="left_gripper_base_link"/>
+    <child link="left_gripper_finger_2"/>
+    <origin xyz="0.05 -0.02 0" rpy="0 0 0"/>
+    <axis xyz="0 0 -1"/>
+    <limit lower="-1.0" upper="1.0" effort="5" velocity="5.0"/>
+  </joint>
+  <link name="left_gripper_finger_2">
+    <visual>
+        <geometry>
+          <mesh filename="meshes/gripper_finger.stl" scale="0.001 0.001 0.001"/>
+        </geometry>
+        <origin xyz="0 0 0" rpy="3.14159 0 0"/>
+        <material name="black"/>
+     </visual>
+    <collision>
+        <geometry><box size="0.04 0.01 0.01"/></geometry>
+        <origin xyz="0.02 0 0" rpy="0 0 0"/>
+     </collision>
   </link>
 
 
@@ -227,6 +318,9 @@
       <geometry><box size="0.04 0.04 0.04"/></geometry>
       <material name="grey"/>
     </visual>
+    <collision>
+      <geometry><box size="0.04 0.04 0.04"/></geometry>
+    </collision>
   </link>
 
   <joint name="arm_right_shoulder_pan" type="revolute">
@@ -238,6 +332,7 @@
   </joint>
   <link name="right_shoulder_pan_link">
     <visual><geometry><cylinder length="0.04" radius="0.02"/></geometry><material name="black"/></visual>
+    <collision><geometry><cylinder length="0.04" radius="0.02"/></geometry></collision>
   </link>
 
   <joint name="arm_right_shoulder_lift" type="revolute">
@@ -253,6 +348,10 @@
         <origin xyz="0.075 0 0" rpy="0 0 0"/>
         <material name="white"/>
      </visual>
+     <collision>
+        <geometry><box size="0.15 0.03 0.03"/></geometry>
+        <origin xyz="0.075 0 0" rpy="0 0 0"/>
+     </collision>
   </link>
 
   <joint name="arm_right_elbow_flex" type="revolute">
@@ -268,6 +367,10 @@
         <origin xyz="0.075 0 0" rpy="0 0 0"/>
         <material name="white"/>
      </visual>
+     <collision>
+        <geometry><box size="0.15 0.03 0.03"/></geometry>
+        <origin xyz="0.075 0 0" rpy="0 0 0"/>
+     </collision>
   </link>
 
   <joint name="arm_right_wrist_flex" type="revolute">
@@ -278,7 +381,14 @@
     <limit lower="-3.14" upper="3.14" effort="10" velocity="3.0"/>
   </joint>
   <link name="right_wrist_flex_link">
-    <visual><geometry><cylinder length="0.04" radius="0.015"/></geometry><material name="black"/></visual>
+    <visual>
+      <geometry>
+        <mesh filename="meshes/wrist_flex.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <material name="black"/>
+    </visual>
+    <collision><geometry><cylinder length="0.04" radius="0.015"/></geometry></collision>
   </link>
 
   <joint name="arm_right_wrist_roll" type="revolute">
@@ -290,25 +400,58 @@
   </joint>
   <link name="right_gripper_base_link">
      <visual>
-        <geometry><box size="0.05 0.02 0.04"/></geometry>
-        <origin xyz="0.025 0 0" rpy="0 0 0"/>
+        <geometry>
+          <mesh filename="meshes/gripper_base.stl" scale="0.001 0.001 0.001"/>
+        </geometry>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
         <material name="grey"/>
      </visual>
+     <collision>
+        <geometry><box size="0.05 0.02 0.04"/></geometry>
+        <origin xyz="0.025 0 0" rpy="0 0 0"/>
+     </collision>
   </link>
 
   <joint name="arm_right_gripper" type="revolute">
     <parent link="right_gripper_base_link"/>
     <child link="right_gripper_finger"/>
-    <origin xyz="0.05 0 0" rpy="0 0 0"/>
+    <origin xyz="0.05 0.02 0" rpy="0 0 0"/>
     <axis xyz="0 0 1"/>
     <limit lower="-1.0" upper="1.0" effort="5" velocity="5.0"/>
   </joint>
   <link name="right_gripper_finger">
     <visual>
-        <geometry><box size="0.04 0.01 0.01"/></geometry>
-        <origin xyz="0.02 0 0" rpy="0 0 0"/>
+        <geometry>
+          <mesh filename="meshes/gripper_finger.stl" scale="0.001 0.001 0.001"/>
+        </geometry>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
         <material name="black"/>
      </visual>
+    <collision>
+        <geometry><box size="0.04 0.01 0.01"/></geometry>
+        <origin xyz="0.02 0 0" rpy="0 0 0"/>
+     </collision>
+  </link>
+
+  <joint name="arm_right_gripper_2" type="revolute">
+    <parent link="right_gripper_base_link"/>
+    <child link="right_gripper_finger_2"/>
+    <origin xyz="0.05 -0.02 0" rpy="0 0 0"/>
+    <axis xyz="0 0 -1"/>
+    <limit lower="-1.0" upper="1.0" effort="5" velocity="5.0"/>
+  </joint>
+  <link name="right_gripper_finger_2">
+    <visual>
+        <geometry>
+          <mesh filename="meshes/gripper_finger.stl" scale="0.001 0.001 0.001"/>
+        </geometry>
+        <origin xyz="0 0 0" rpy="3.14159 0 0"/>
+        <material name="black"/>
+     </visual>
+    <collision>
+        <geometry><box size="0.04 0.01 0.01"/></geometry>
+        <origin xyz="0.02 0 0" rpy="0 0 0"/>
+     </collision>
   </link>
 
 </robot>
