@@ -324,56 +324,26 @@ class LeKiwiClient(Robot):
         if self.teleop_keys["rotate_right"] in pressed_keys:
             theta_cmd -= theta_speed
 
-
-        return {
-            "x.vel": x_cmd,
-            "y.vel": y_cmd,
-            "theta.vel": theta_cmd,
-        }
-    
-    # lift_axis.vel
-    # def _from_keyboard_to_lift_action(self, pressed_keys: np.ndarray):
-    #     LIFT_VEL = 1000  # 觉得慢/快就改
-    #     up_pressed = self.teleop_keys.get("lift_up", "u") in pressed_keys
-    #     dn_pressed = self.teleop_keys.get("lift_down", "j") in pressed_keys
-
-    #     if up_pressed and not dn_pressed:
-    #         v = +LIFT_VEL
-    #     elif dn_pressed and not up_pressed:
-    #         v = -LIFT_VEL
-    #     else:
-    #         v = 0.0
-    #     return {"lift_axis.vel": int(v)}
-    
-
-    # lift_axis.height_mm
-    def _from_keyboard_to_lift_action(self, pressed_keys: np.ndarray):
+        # Lift Control
         up_pressed = self.teleop_keys.get("lift_up", "u") in pressed_keys
         dn_pressed = self.teleop_keys.get("lift_down", "j") in pressed_keys
 
         # Read the last height (mm) reported by the Host
         h_now = float(self.last_remote_state.get("lift_axis.height_mm", 0.0))
-        #print(f"h_now:{h_now}")
 
-        if not (up_pressed or dn_pressed):
-        # If neither 'u' nor 'j' is pressed, reuse the previous value to avoid empty input
-            #return {"lift_axis.height_mm": h_now}
-            return {"lift_axis.height_mm": h_now}
-
-        # Increment on each key press
         if up_pressed and not dn_pressed:
             h_target = h_now + LiftAxisConfig.step_mm
         elif dn_pressed and not up_pressed:
             h_target = h_now - LiftAxisConfig.step_mm
         else:
             h_target = h_now
-        #print(f"h_target:{h_target}")
 
-        # Send "target height (mm)" directly
-        return {"lift_axis.height_mm": h_target}
-
-
-
+        return {
+            "x.vel": x_cmd,
+            "y.vel": y_cmd,
+            "theta.vel": theta_cmd,
+            "lift_axis.height_mm": h_target,
+        }
 
     def configure(self):
         pass
