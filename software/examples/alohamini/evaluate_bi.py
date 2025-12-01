@@ -1,5 +1,12 @@
 #!/usr/bin/env python3
 
+import sys
+import os
+
+# Add repo root to path
+repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.."))
+sys.path.append(repo_root)
+
 from lerobot.datasets.lerobot_dataset import LeRobotDataset
 from lerobot.datasets.utils import hw_to_dataset_features
 from lerobot.policies.act.modeling_act import ACTPolicy
