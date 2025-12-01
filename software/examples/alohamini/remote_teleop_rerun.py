@@ -131,6 +131,9 @@ def zmq_listener(ip, port, stop_event):
                                 if not k.startswith("camera/"):
                                     # Rename keys like 'head_top' -> 'camera/head_top'
                                     obs_decoded[f"camera/{k}"] = img
+                                    # Optional: Clear the old key to avoid duplication if it exists (though here we're building a new dict)
+                                    # Rerun persists entities, so we need to manually clear them if we want them gone from the viewer
+                                    rr.log(f"observation.{k}", rr.Clear(recursive=False))
                                 else:
                                     obs_decoded[k] = img
                         except Exception:
