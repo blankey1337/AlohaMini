@@ -5,7 +5,7 @@ This guide outlines how to develop, train, and test AlohaMini using a remote clo
 ## Architecture
 
 *   **Cloud Server (The "Lab")**: Runs NVIDIA Isaac Sim. Handles physics, rendering, and training.
-*   **Local Machine (The "Mission Control")**: Runs the Dashboard and Teleoperation scripts. Connects to the cloud via SSH.
+*   **Local Machine (The "Mission Control")**: Runs the Teleoperation script with Rerun visualization. Connects to the cloud via SSH.
 
 ## Prerequisites
 
@@ -51,23 +51,22 @@ This guide outlines how to develop, train, and test AlohaMini using a remote clo
     ssh -L 5555:localhost:5555 -L 5556:localhost:5556 ubuntu@<CLOUD_IP>
     ```
 
-3.  **Launch Dashboard (Local)**
-    Start the web dashboard to see what the robot sees.
+3.  **Launch Teleop & Visualization (Local)**
+    Start the teleop script which includes Rerun for visualization.
     ```bash
     # On Local Mac
-    python software/dashboard/app.py
+    python software/examples/alohamini/remote_teleop_rerun.py
     ```
-    Open `http://localhost:5001` in your browser.
+    This will open the Rerun viewer and a terminal interface for control.
 
 4.  **Teleoperate & Record**
-    *   Use the Dashboard to see the camera feed.
-    *   Run the teleop script in another terminal to control the robot with your keyboard:
-        ```bash
-        python software/examples/alohamini/standalone_teleop.py --ip 127.0.0.1
-        ```
-    *   **To Record**: Click the **"Start Recording"** button on the Dashboard.
+    *   **Controls**:
+        *   WASD: Move Base
+        *   Q/E: Rotate Base
+        *   U/J: Lift Up/Down
+    *   **To Record**: Press **'r'** in the terminal window to toggle recording.
     *   Perform the task (e.g., pick up the object).
-    *   Click **"Stop Recording"**.
+    *   Press **'r'** again to stop recording.
     *   Repeat 50-100 times. The data is saved to `AlohaMini/data_sim/` on the **Cloud Server**.
 
 ### Phase 2: Training
@@ -102,7 +101,7 @@ Test the trained model in the simulator to see if it works.
     *   *Coming Soon: `eval_sim.py` which loads the safetensor and drives the ZMQ robot.*
 
 3.  **Watch (Local)**:
-    Use the Dashboard to watch the robot perform the task autonomously.
+    Use `software/examples/alohamini/remote_teleop_rerun.py` (without touching keys) to watch the robot perform the task autonomously.
 
 ## Troubleshooting
 
